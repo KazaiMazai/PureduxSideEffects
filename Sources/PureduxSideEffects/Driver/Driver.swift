@@ -6,9 +6,6 @@
 //
 
 import PureduxStore
-//
-//public typealias Store<State, Action> = ReduxStore.Store<State, Action>
-//public typealias Observer<State> = ReduxStore.Observer<State>
 
 public protocol SideEffectsDriver {
     associatedtype State
