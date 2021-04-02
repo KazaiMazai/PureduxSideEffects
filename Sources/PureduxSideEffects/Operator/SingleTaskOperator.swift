@@ -16,10 +16,10 @@ open class SingleTaskOperator<Request, Task>: OperatorProtocol
 
     public var processingQueue: DispatchQueue { underlyingOperator.processingQueue }
 
-    public init(queueLabel: String,
+    public init(label: String,
                 qos: DispatchQoS,
-                logging: LogSource = .defaultLogging()) {
-        underlyingOperator = Operator(queueLabel: queueLabel, qos: qos, logging: logging)
+                logSource: LogSource = .defaultLogging()) {
+        underlyingOperator = Operator(label: label, qos: qos, logSource: logSource)
     }
 
     public func process(_ input: Request) {

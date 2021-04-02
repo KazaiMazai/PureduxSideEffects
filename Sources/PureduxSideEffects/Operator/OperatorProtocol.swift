@@ -8,12 +8,12 @@
 import Foundation
 
 public protocol OperatorProtocol {
-    associatedtype Input
+    associatedtype Props
     associatedtype Request: OperatorRequest
     associatedtype Task: OperatorTask
 
     var processingQueue: DispatchQueue { get }
-    func process(_ input: Input)
+    func process(_ props: Props)
 
     func createTaskFor(_ request: Request, with completeHandler: @escaping (OperatorResult<Request.Result>) -> Void) -> Task
 

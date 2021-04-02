@@ -16,18 +16,18 @@ open class Operator<Request, Task>: OperatorProtocol
     private var completedRequests: Set<Request.RequestID> = []
 
     public let processingQueue: DispatchQueue
-    public let logging: LogSource
+    public let logSource: LogSource
 
-    public init(queueLabel: String,
+    public init(label: String,
                 qos: DispatchQoS,
-                logging: LogSource = .defaultLogging()) {
-        self.processingQueue = DispatchQueue(label: queueLabel)
-        self.logging = logging
+                logSource: LogSource = .defaultLogging()) {
+        self.processingQueue = DispatchQueue(label: label)
+        self.logSource = logSource
     }
 
     public func process(_ input: [Request]) {
         processingQueue.async { [weak self] in
-            self?.match(requests: input)
+            self?.performTasksFor(input)
         }
     }
 
@@ -41,7 +41,7 @@ open class Operator<Request, Task>: OperatorProtocol
 }
 
 extension Operator {
-    private func match(requests: [Request]) {
+    private func performTasksFor(_ requests: [Request]) {
         var remainedActiveRequestsIds = Set(activeRequests.keys)
 
         for request in requests {
@@ -63,7 +63,7 @@ extension Operator {
             return
         }
 
-        logging.log(.trace, "ID: \(request.id)")
+        logSource.log(.trace, "ID: \(request.id)")
 
         let task = createTaskFor(request) { [weak self] result in
             self?.processingQueue.async {
