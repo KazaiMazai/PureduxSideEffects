@@ -16,18 +16,18 @@ open class Operator<Request, Task>: OperatorProtocol
     private var completedRequests: Set<Request.RequestID> = []
 
     public let processingQueue: DispatchQueue
-    public let logging: LogSource
+    public let logSource: LogSource
 
-    public init(queueLabel: String,
+    public init(label: String,
                 qos: DispatchQoS,
-                logging: LogSource = .defaultLogging()) {
-        self.processingQueue = DispatchQueue(label: queueLabel)
-        self.logging = logging
+                logSource: LogSource = .defaultLogSource()) {
+        self.processingQueue = DispatchQueue(label: label)
+        self.logSource = logSource
     }
 
     public func process(_ input: [Request]) {
         processingQueue.async { [weak self] in
-            self?.match(requests: input)
+            self?.performTasksFor(input)
         }
     }
 
@@ -41,20 +41,20 @@ open class Operator<Request, Task>: OperatorProtocol
 }
 
 extension Operator {
-    private func match(requests: [Request]) {
-        var remainedActiveRequestsIds = Set(activeRequests.keys)
+    private func performTasksFor(_ requests: [Request]) {
+        var requestsToCancel = Set(activeRequests.keys)
 
-        for request in requests {
-            runTaskIfNeededFor(request: request)
-            remainedActiveRequestsIds.remove(request.id)
+        requests.forEach {
+            runTaskIfNeededFor($0)
+            requestsToCancel.remove($0.id)
         }
 
-        for cancelledRequestId in remainedActiveRequestsIds {
-            cancel(requestId: cancelledRequestId)
+        requestsToCancel.forEach {
+            cancel(requestId: $0)
         }
     }
 
-    private func runTaskIfNeededFor(request: Request) {
+    private func runTaskIfNeededFor(_ request: Request) {
         if completedRequests.contains(request.id) {
             return
         }
@@ -63,7 +63,7 @@ extension Operator {
             return
         }
 
-        logging.log(.trace, "ID: \(request.id)")
+        logSource.log(.trace, "ID: \(request.id)")
 
         let task = createTaskFor(request) { [weak self] result in
             self?.processingQueue.async {
