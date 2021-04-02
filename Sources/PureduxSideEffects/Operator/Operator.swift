@@ -20,7 +20,7 @@ open class Operator<Request, Task>: OperatorProtocol
 
     public init(label: String,
                 qos: DispatchQoS,
-                logSource: LogSource = .defaultLogging()) {
+                logSource: LogSource = .defaultLogSource()) {
         self.processingQueue = DispatchQueue(label: label)
         self.logSource = logSource
     }
@@ -42,19 +42,19 @@ open class Operator<Request, Task>: OperatorProtocol
 
 extension Operator {
     private func performTasksFor(_ requests: [Request]) {
-        var remainedActiveRequestsIds = Set(activeRequests.keys)
+        var requestsToCancel = Set(activeRequests.keys)
 
-        for request in requests {
-            runTaskIfNeededFor(request: request)
-            remainedActiveRequestsIds.remove(request.id)
+        requests.forEach {
+            runTaskIfNeededFor($0)
+            requestsToCancel.remove($0.id)
         }
 
-        for cancelledRequestId in remainedActiveRequestsIds {
-            cancel(requestId: cancelledRequestId)
+        requestsToCancel.forEach {
+            cancel(requestId: $0)
         }
     }
 
-    private func runTaskIfNeededFor(request: Request) {
+    private func runTaskIfNeededFor(_ request: Request) {
         if completedRequests.contains(request.id) {
             return
         }

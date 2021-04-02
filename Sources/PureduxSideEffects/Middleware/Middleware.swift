@@ -11,24 +11,24 @@ public struct Middleware<State, Action, Operator>
     where
     Operator: OperatorProtocol {
 
-    public let store: Store<State, Action>
+    private let store: Store<State, Action>
+    private let `operator`: Operator
 
-    private let sideEffectsOperator: Operator
-    private let props: (_ state: State, _ on: Store<State, Action>) -> Operator.Props
+    private let props: (_ state: State, _ store: Store<State, Action>) -> Operator.Props
 
     public init(store: Store<State, Action>,
-                sideEffectsOperator: Operator,
+                operator: Operator,
                 props: @escaping (State, Store<State, Action>) -> Operator.Props) {
         self.store = store
-        self.sideEffectsOperator = sideEffectsOperator
+        self.operator = `operator`
         self.props = props
     }
 }
 
 extension Middleware {
     public var asObserver: Observer<State> {
-        Observer(queue: self.sideEffectsOperator.processingQueue) { state in
-            observe(state: state)
+        Observer(queue: self.operator.processingQueue) {
+            observe(state: $0)
             return .active
         }
     }
@@ -37,6 +37,6 @@ extension Middleware {
 extension Middleware {
     private func observe(state: State) {
         let operatorProps = props(state, store)
-        sideEffectsOperator.process(operatorProps)
+        `operator`.process(operatorProps)
     }
 }

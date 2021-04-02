@@ -8,28 +8,30 @@
 import Foundation
 
 public struct LogSource {
-    let name: String
-    let logger: Logger
-    let logLevel: Loglevel
+    private let name: String
+    private let logger: Logger
+    private let logLevel: LogLevel
 
-    public init(name: String, logger: Logger, logLevel: Loglevel) {
+    public init(name: String, logger: Logger, logLevel: LogLevel) {
         self.name = name
         self.logger = logger
         self.logLevel = logLevel
     }
 
-    public static func defaultLogging(level: Loglevel = .info) -> LogSource {
-        .init(name: "", logger: ConsoleLogger(level: level), logLevel: level)
+    public static func defaultLogSource(logLevel: LogLevel = .info) -> LogSource {
+        LogSource(name: "📱",
+                  logger: ConsoleLogger(level: logLevel),
+                  logLevel: logLevel)
     }
 
-    public func log<T>(_ level: Loglevel, _ msg: T) {
+    public func log<T>(_ level: LogLevel, _ msg: T) {
         guard level >= self.logLevel else {
             return
         }
         logger.log(level, "[\(name)] \(msg)")
     }
 
-    public func log<T>(_ level: Loglevel, msg: T, with data: Data) {
+    public func log<T>(_ level: LogLevel, msg: T, with data: Data) {
         guard level >= self.logLevel else {
             return
         }
