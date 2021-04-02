@@ -7,35 +7,27 @@
 
 import Foundation
 
-public protocol OperatorProtocol {
-    associatedtype Request: OperatorRequest
-    associatedtype Task: OperatorTask
+open class Operator<Request, Task>: OperatorProtocol
+    where
+    Task: OperatorTask,
+    Request: OperatorRequest {
 
-    var queue: DispatchQueue { get }
-    func process(requests: [Request])
-
-    func createTaskFor(_ request: Request, with completeHandler: @escaping (OperatorResult<Request.Result>) -> Void) -> Task
-
-    func run(task: Task, for request: Request)
-}
-
-open class Operator<Request, Task>: OperatorProtocol where Task: OperatorTask, Request: OperatorRequest {
     private var activeRequests: [Request.RequestID: (Request, Task)] = [:]
     private var completedRequests: Set<Request.RequestID> = []
 
-    public let queue: DispatchQueue
+    public let processingQueue: DispatchQueue
     public let logging: LogSource
 
     public init(queueLabel: String,
                 qos: DispatchQoS,
                 logging: LogSource = .defaultLogging()) {
-        self.queue = DispatchQueue(label: queueLabel)
+        self.processingQueue = DispatchQueue(label: queueLabel)
         self.logging = logging
     }
 
-    public func process(requests: [Request]) {
-        queue.async { [weak self] in
-            self?.updateActiveRequests(requests: requests)
+    public func process(_ input: [Request]) {
+        processingQueue.async { [weak self] in
+            self?.match(requests: input)
         }
     }
 
@@ -49,11 +41,11 @@ open class Operator<Request, Task>: OperatorProtocol where Task: OperatorTask, R
 }
 
 extension Operator {
-    private func updateActiveRequests(requests: [Request]) {
+    private func match(requests: [Request]) {
         var remainedActiveRequestsIds = Set(activeRequests.keys)
 
         for request in requests {
-            process(request: request)
+            runTaskIfNeededFor(request: request)
             remainedActiveRequestsIds.remove(request.id)
         }
 
@@ -62,7 +54,7 @@ extension Operator {
         }
     }
 
-    private func process(request: Request) {
+    private func runTaskIfNeededFor(request: Request) {
         if completedRequests.contains(request.id) {
             return
         }
@@ -74,7 +66,7 @@ extension Operator {
         logging.log(.trace, "ID: \(request.id)")
 
         let task = createTaskFor(request) { [weak self] result in
-            self?.queue.async {
+            self?.processingQueue.async {
                 self?.complete(request: request, result: result)
             }
         }
