@@ -20,19 +20,19 @@ public struct LogSource {
 
     public static func defaultLogSource(logLevel: LogLevel = .info) -> LogSource {
         LogSource(name: "📱",
-                  logger: ConsoleLogger(level: logLevel),
+                  logger: ConsoleLogger(logLevel: logLevel),
                   logLevel: logLevel)
     }
 
     public func log<T>(_ level: LogLevel, _ msg: T) {
-        guard level >= self.logLevel else {
+        guard level >= logLevel else {
             return
         }
         logger.log(level, "[\(name)] \(msg)")
     }
 
     public func log<T>(_ level: LogLevel, msg: T, with data: Data) {
-        guard level >= self.logLevel else {
+        guard level >= logLevel else {
             return
         }
         let dataMsg = String(data: data, encoding: .utf8)

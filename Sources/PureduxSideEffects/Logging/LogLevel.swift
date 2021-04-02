@@ -31,8 +31,16 @@ public enum LogLevel: Int, Comparable {
             return "🤐"
         }
     }
+}
 
+extension LogLevel {
     public static func < (lhs: LogLevel, rhs: LogLevel) -> Bool {
-        return lhs.rawValue < rhs.rawValue
+        return lhs.level < rhs.level
+    }
+}
+
+extension LogLevel {
+    private var level: Int {
+        rawValue
     }
 }
