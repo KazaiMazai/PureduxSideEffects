@@ -20,7 +20,7 @@ public struct ConsoleLogger: Logger {
     public let logLevel: LogLevel
 
     public func log<T>(_ level: LogLevel, _ msg: T) {
-        guard level >= self.level else {
+        guard level >= logLevel else {
             return
         }
         print("[\(level.label)]", msg)
