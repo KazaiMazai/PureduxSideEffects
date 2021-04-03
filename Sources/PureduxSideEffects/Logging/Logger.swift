@@ -10,10 +10,10 @@ import Foundation
 public struct Logger {
     typealias LogHandler<T> = (_ level: LogLevel, _ msg: T) -> Void
 
-    let logLevel: LogLevel
-    let logHandler: LogHandler<Any>
+    private let logLevel: LogLevel
+    private let logHandler: LogHandler<Any>
 
-    func log<T>(_ level: LogLevel, _ msg: T) {
+    public func log<T>(_ level: LogLevel, _ msg: T) {
         guard level >= logLevel else {
             return
         }
@@ -21,7 +21,7 @@ public struct Logger {
         logHandler(level, msg)
     }
 
-    func log<T>(_ level: LogLevel, msg: T, with data: Data) {
+    public func log<T>(_ level: LogLevel, msg: T, with data: Data) {
         guard level >= logLevel else {
             return
         }
