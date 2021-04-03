@@ -13,6 +13,11 @@ public struct Logger {
     private let logLevel: LogLevel
     private let logHandler: LogHandler<Any>
 
+    public init(logLevel: LogLevel, logHandler: Logger.LogHandler<Any>) {
+        self.logLevel = logLevel
+        self.logHandler = logHandler
+    }
+
     public func log<T>(_ level: LogLevel, _ msg: T) {
         guard level >= logLevel else {
             return
@@ -26,7 +31,7 @@ public struct Logger {
             return
         }
 
-        log(level, "\(msg) \(data.prettyPrintedJSONString ?? "No Data")")
+        log(level, "\(msg) \(data.toPrettyString ?? "No Data")")
     }
 }
 
@@ -47,21 +52,26 @@ public extension Logger {
         }
     }
 
+    static func with(logLevel: LogLevel, logger: Logger) -> Logger {
+        Logger(logLevel: logLevel) { level, msg in
+            logger.log(level, msg)
+        }
+    }
+
     static func with(label: String, logger: Logger) -> Logger {
         .with(label: label, logLevel: logger.logLevel, logger: logger)
     }
 }
 
-
-extension Data {
-    var prettyPrintedJSONString: String? {
+fileprivate extension Data {
+    var toPrettyString: String? {
         guard let object = try? JSONSerialization.jsonObject(with: self, options: []),
               let data = try? JSONSerialization.data(withJSONObject: object, options: [.prettyPrinted]),
-              let prettyPrintedString = String(data: data, encoding: .utf8)
+              let prettyString = String(data: data, encoding: .utf8)
         else {
             return nil
         }
 
-        return prettyPrintedString
+        return prettyString
     }
 }
