@@ -16,13 +16,13 @@ open class Operator<Request, Task>: OperatorProtocol
     private var completedRequests: Set<Request.RequestID> = []
 
     public let processingQueue: DispatchQueue
-    public let logSource: LogSource
+    public let logger: Logger
 
     public init(label: String,
                 qos: DispatchQoS,
-                logSource: LogSource = .defaultLogSource()) {
+                logger: Logger =  .with(label: "📱", logger: .console(.info))) {
         self.processingQueue = DispatchQueue(label: label)
-        self.logSource = logSource
+        self.logger = logger
     }
 
     public func process(_ input: [Request]) {
@@ -63,7 +63,7 @@ extension Operator {
             return
         }
 
-        logSource.log(.trace, "ID: \(request.id)")
+        logger.log(.debug, "[Run] ID: \(request.id)")
 
         let task = createTaskFor(request) { [weak self] result in
             self?.processingQueue.async {
@@ -80,12 +80,14 @@ extension Operator {
            return
         }
 
-        task.cancel() // Stop task execution
+        logger.log(.debug, "[Cancel] ID: \(requestId)")
+        task.cancel()
         activeRequests[requestId] = nil
         request.handle(.cancelled)
     }
 
     private func complete(request: Request, result: OperatorResult<Request.Result>) {
+        logger.log(.debug, "[Complete] ID: \(request.id)")
         activeRequests[request.id] = nil
         completedRequests.insert(request.id)
         request.handle(result)
