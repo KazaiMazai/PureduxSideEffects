@@ -20,9 +20,9 @@ open class Operator<Request, Task>: OperatorProtocol
 
     public init(label: String,
                 qos: DispatchQoS,
-                logger: Logger =  .with(label: "📱", logger: .console(.info))) {
+                logger: Logger = .console(.info)) {
         self.processingQueue = DispatchQueue(label: label)
-        self.logger = logger
+        self.logger = .with(label: label, logger: logger)
     }
 
     public func process(_ input: [Request]) {

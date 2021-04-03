@@ -8,12 +8,12 @@
 import Foundation
 
 public struct Logger {
-    typealias LogHandler<T> = (_ level: LogLevel, _ msg: T) -> Void
+    public typealias LogHandler<T> = (_ level: LogLevel, _ msg: T) -> Void
 
     private let logLevel: LogLevel
     private let logHandler: LogHandler<Any>
 
-    public init(logLevel: LogLevel, logHandler: Logger.LogHandler<Any>) {
+    public init(logLevel: LogLevel, logHandler: @escaping Logger.LogHandler<Any>) {
         self.logLevel = logLevel
         self.logHandler = logHandler
     }

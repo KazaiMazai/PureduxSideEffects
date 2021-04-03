@@ -18,7 +18,7 @@ open class SingleTaskOperator<Request, Task>: OperatorProtocol
 
     public init(label: String,
                 qos: DispatchQoS,
-                logger: Logger =  .with(label: "📱", logger: .console(.info))) {
+                logger: Logger = .console(.info)) {
         underlyingOperator = Operator(label: label, qos: qos, logger: logger)
     }
 
