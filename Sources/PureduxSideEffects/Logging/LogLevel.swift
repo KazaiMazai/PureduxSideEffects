@@ -11,9 +11,12 @@ public enum LogLevel: Int, Comparable {
     case trace
     case debug
     case info
+    case notice
     case warning
     case error
+    case critical
     case silent
+
 
     var label: String {
         switch self {
@@ -22,11 +25,15 @@ public enum LogLevel: Int, Comparable {
         case .debug:
             return "🐞"
         case .info:
-            return "✏️"
-        case .warning:
+            return "ℹ️"
+        case .notice:
             return "✋🏼"
+        case .warning:
+            return "⚠️"
         case .error:
             return "😡"
+        case .critical:
+            return "🔥"
         case .silent:
             return "🤐"
         }

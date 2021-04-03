@@ -18,8 +18,8 @@ open class SingleTaskOperator<Request, Task>: OperatorProtocol
 
     public init(label: String,
                 qos: DispatchQoS,
-                logSource: LogSource = .defaultLogSource()) {
-        underlyingOperator = Operator(label: label, qos: qos, logSource: logSource)
+                logger: Logger =  .with(label: "📱", logger: .console(.info))) {
+        underlyingOperator = Operator(label: label, qos: qos, logger: logger)
     }
 
     public func process(_ input: Request) {
