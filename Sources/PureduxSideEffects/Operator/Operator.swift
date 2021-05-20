@@ -31,7 +31,7 @@ open class Operator<Request, Task>: OperatorProtocol
         }
     }
 
-    open func createTaskFor(_ request: Request, with taskResultHandler: @escaping (TaskResult<Request.Result>) -> Void) -> Task {
+    open func createTaskFor(_ request: Request, with taskResultHandler: @escaping (TaskResult<Request.Result, Request.Status>) -> Void) -> Task {
         fatalError("Not implemented. Should be overriden")
     }
 
@@ -67,7 +67,7 @@ extension Operator {
 
         let task = createTaskFor(request) { [weak self] result in
             self?.processingQueue.async {
-                self?.complete(request: request, with: result)
+                self?.handleTaskStatusUpdate(request: request, with: result)
             }
         }
 
@@ -86,10 +86,17 @@ extension Operator {
         request.handle(.cancelled)
     }
 
-    private func complete(request: Request, with result: TaskResult<Request.Result>) {
-        logger.log(.debug, "[Complete] ID: \(request.id)")
-        activeRequests[request.id] = nil
-        completedRequests.insert(request.id)
+    private func handleTaskStatusUpdate(request: Request, with result: TaskResult<Request.Result, Request.Status>) {
+        switch result {
+        case .success, .cancelled, .error:
+            logger.log(.debug, "[Complete] ID: \(request.id)")
+            activeRequests[request.id] = nil
+            completedRequests.insert(request.id)
+        case .statusChanged(let status):
+            logger.log(.debug, "[Status Changed] ID: \(request.id) [\(status)]")
+            break
+        }
+
         request.handle(result)
     }
 }
