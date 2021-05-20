@@ -22,8 +22,9 @@ open class SingleTaskOperator<Request, Task>: OperatorProtocol
         underlyingOperator = Operator(label: label, qos: qos, logger: logger)
     }
 
-    public func process(_ input: Request) {
-        underlyingOperator.process([input])
+    public func process(_ input: Request?) {
+        let processRequests = input.map { [$0] } ?? []
+        underlyingOperator.process(processRequests)
     }
 
     open func createTaskFor(_ request: Request, with completeHandler: @escaping (OperatorResult<Request.Result>) -> Void) -> Task {
