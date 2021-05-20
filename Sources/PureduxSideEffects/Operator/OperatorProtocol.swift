@@ -15,7 +15,7 @@ public protocol OperatorProtocol {
     var processingQueue: DispatchQueue { get }
     func process(_ props: Props)
 
-    func createTaskFor(_ request: Request, with completeHandler: @escaping (OperatorResult<Request.Result>) -> Void) -> Task
+    func createTaskFor(_ request: Request, with taskResultHandler: @escaping (TaskResult<Request.Result>) -> Void) -> Task
 
     func run(task: Task, for request: Request)
 }

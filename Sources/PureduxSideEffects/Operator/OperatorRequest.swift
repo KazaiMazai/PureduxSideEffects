@@ -12,5 +12,5 @@ public protocol OperatorRequest {
     associatedtype RequestID: Hashable
 
     var id: RequestID { get }
-    func handle(_ result: OperatorResult<Result>)
+    func handle(_ result: TaskResult<Result>)
 }
