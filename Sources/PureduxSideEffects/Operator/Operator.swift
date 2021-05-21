@@ -88,7 +88,7 @@ extension Operator {
 
     private func handleTaskStatusUpdate(request: Request, with result: TaskResult<Request.SuccessResult, Request.TaskStatus>) {
         switch result {
-        case .success, .cancelled, .error:
+        case .success, .cancelled, .failure:
             logger.log(.debug, "[Complete] ID: \(request.id)")
             activeRequests[request.id] = nil
             completedRequests.insert(request.id)

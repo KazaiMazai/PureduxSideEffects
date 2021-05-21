@@ -11,5 +11,5 @@ public enum TaskResult<T, Status> {
     case success(T)
     case cancelled
     case statusChanged(Status)
-    case error(Error)
+    case failure(Error)
 }
