@@ -8,10 +8,10 @@
 import Foundation
 
 public protocol OperatorRequest {
-    associatedtype Result
-    associatedtype Status
-    associatedtype RequestID: Hashable
+    associatedtype SuccessResult
+    associatedtype TaskStatus
+    associatedtype ID: Hashable
 
-    var id: RequestID { get }
-    func handle(_ result: TaskResult<Result, Status>)
+    var id: ID { get }
+    func handle(_ result: TaskResult<SuccessResult, TaskStatus>)
 }

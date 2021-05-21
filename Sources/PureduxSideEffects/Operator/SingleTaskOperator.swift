@@ -27,7 +27,7 @@ open class SingleTaskOperator<Request, Task>: OperatorProtocol
         underlyingOperator.process(processRequests)
     }
 
-    open func createTaskFor(_ request: Request, with taskResultHandler: @escaping (TaskResult<Request.Result, Request.Status>) -> Void) -> Task {
+    open func createTaskFor(_ request: Request, with taskResultHandler: @escaping (TaskResult<Request.SuccessResult, Request.TaskStatus>) -> Void) -> Task {
         fatalError("Not implemented. Should be overriden")
     }
 

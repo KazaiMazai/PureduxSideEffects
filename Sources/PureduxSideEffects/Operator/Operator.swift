@@ -12,8 +12,8 @@ open class Operator<Request, Task>: OperatorProtocol
     Task: OperatorTask,
     Request: OperatorRequest {
 
-    private var activeRequests: [Request.RequestID: (Request, Task)] = [:]
-    private var completedRequests: Set<Request.RequestID> = []
+    private var activeRequests: [Request.ID: (Request, Task)] = [:]
+    private var completedRequests: Set<Request.ID> = []
 
     public let processingQueue: DispatchQueue
     public let logger: Logger
@@ -31,7 +31,7 @@ open class Operator<Request, Task>: OperatorProtocol
         }
     }
 
-    open func createTaskFor(_ request: Request, with taskResultHandler: @escaping (TaskResult<Request.Result, Request.Status>) -> Void) -> Task {
+    open func createTaskFor(_ request: Request, with taskResultHandler: @escaping (TaskResult<Request.SuccessResult, Request.TaskStatus>) -> Void) -> Task {
         fatalError("Not implemented. Should be overriden")
     }
 
@@ -45,7 +45,7 @@ extension Operator {
         var requestsToCancel = Set(activeRequests.keys)
 
         requests.forEach {
-            runTaskIfNeededFor($0)
+            runTaskIfNeededFor(request: $0)
             requestsToCancel.remove($0.id)
         }
 
@@ -54,8 +54,8 @@ extension Operator {
         }
     }
 
-    private func runTaskIfNeededFor(_ request: Request) {
-        if completedRequests.contains(request.id) {
+    private func runTaskIfNeededFor(request: Request) {
+        guard !completedRequests.contains(request.id) else {
             return
         }
 
@@ -75,9 +75,9 @@ extension Operator {
         run(task: task, for: request)
     }
 
-    private func cancel(requestId: Request.RequestID) {
+    private func cancel(requestId: Request.ID) {
         guard let (request, task) = activeRequests[requestId] else {
-           return
+            return
         }
 
         logger.log(.debug, "[Cancel] ID: \(requestId)")
@@ -86,7 +86,7 @@ extension Operator {
         request.handle(.cancelled)
     }
 
-    private func handleTaskStatusUpdate(request: Request, with result: TaskResult<Request.Result, Request.Status>) {
+    private func handleTaskStatusUpdate(request: Request, with result: TaskResult<Request.SuccessResult, Request.TaskStatus>) {
         switch result {
         case .success, .cancelled, .error:
             logger.log(.debug, "[Complete] ID: \(request.id)")
