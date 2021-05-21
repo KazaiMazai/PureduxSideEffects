@@ -6,6 +6,7 @@
 //
 
 import PureduxStore
+import Dispatch
 
 public struct Middleware<State, Action, Operator>
     where
@@ -27,14 +28,18 @@ public struct Middleware<State, Action, Operator>
 
 extension Middleware {
     public var asObserver: Observer<State> {
-        Observer(queue: self.operator.processingQueue) {
-            observe(state: $0)
+        Observer { state in
+            queue.async { observe(state: state) }
             return .active
         }
     }
 }
 
 extension Middleware {
+    private var queue: DispatchQueue {
+        `operator`.processingQueue
+    }
+    
     private func observe(state: State) {
         let operatorProps = props(state, store)
         `operator`.process(operatorProps)
