@@ -12,6 +12,8 @@ open class Operator<Request, Task>: OperatorProtocol
     Task: OperatorTask,
     Request: OperatorRequest {
 
+    public typealias TaskResultHandler = (TaskResult<Request.SuccessResult, Request.TaskStatus>) -> Void
+    
     private var activeRequests: [Request.ID: (Request, Task)] = [:]
     private var completedRequests: Set<Request.ID> = []
 
@@ -31,7 +33,7 @@ open class Operator<Request, Task>: OperatorProtocol
         }
     }
 
-    open func createTaskFor(_ request: Request, with taskResultHandler: @escaping (TaskResult<Request.SuccessResult, Request.TaskStatus>) -> Void) -> Task {
+    open func createTaskFor(_ request: Request, with taskResultHandler: @escaping TaskResultHandler) -> Task {
         fatalError("Not implemented. Should be overriden")
     }
 
