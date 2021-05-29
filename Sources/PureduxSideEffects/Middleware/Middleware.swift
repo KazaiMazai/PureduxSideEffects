@@ -39,7 +39,7 @@ extension Middleware {
     private var queue: DispatchQueue {
         `operator`.processingQueue
     }
-    
+
     private func observe(state: State) {
         let operatorProps = props(state, store)
         `operator`.process(operatorProps)
