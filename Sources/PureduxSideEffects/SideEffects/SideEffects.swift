@@ -30,7 +30,7 @@ extension SideEffects where Props: Collection {
         }
     }
 
-    func first() -> SideEffects<State, Action, Props.Element?> {
+    var first: SideEffects<State, Action, Props.Element?> {
         SideEffects<State, Action, Props.Element?> { state, store in
             props(state, store).first
         }
@@ -59,7 +59,7 @@ extension Collection {
     func compactMap<State, Action, Props, T>(
         _ transform: @escaping (Props?) -> T?) -> SideEffects<State, Action, [T]>
 
-    where
+        where
         Element == SideEffects<State, Action, Props?> {
 
         flatten().map { props in props.compactMap { transform($0) } }
