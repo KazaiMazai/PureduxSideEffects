@@ -5,48 +5,103 @@
 //  Created by Sergey Kazakov on 29.05.2021.
 //
 
+import PureduxStore
 import Foundation
 
 public struct SideEffects<State, Action, Props> {
-    public let props: (_ state: State, _ store: Store<State, Action>) -> [Props]
+    public let props: (_ state: State, _ store: Store<State, Action>) -> Props
 
-    public init(props: @escaping (_ state: State, _ store: Store<State, Action>) -> [Props]) {
+    public init(props: @escaping (_ state: State, _ store: Store<State, Action>) -> Props) {
         self.props = props
     }
 }
 
-extension SideEffects {
+extension SideEffects where Props: Collection {
+    static func + (lhs: SideEffects<State, Action, Props>, rhs: SideEffects<State, Action, Props>) -> SideEffects<State, Action, [Props.Element]> {
 
-    static func && (lhs: SideEffects<State, Action, Props>, rhs: SideEffects<State, Action, Props>) -> SideEffects<State, Action, Props> {
-
-        SideEffects<State, Action, Props> { state, store in
+        SideEffects<State, Action, [Props.Element]> { state, store in
             [lhs.props(state, store), rhs.props(state, store)].flatMap { $0 }
         }
     }
 
-    static func empty() -> SideEffects<State, Action, Props> {
-        SideEffects<State, Action, Props> { _, _ in
+    static var empty: SideEffects<State, Action, [Props.Element]> {
+        SideEffects<State, Action, [Props.Element]> { _, _ in
             []
         }
     }
 
-    static func compound<S>(_ sequence: S) -> SideEffects<State, Action, Props>
-        where
-        S: Sequence,
-        S.Element == SideEffects<State, Action, Props> {
+    func first() -> SideEffects<State, Action, Props.Element?> {
+        SideEffects<State, Action, Props.Element?> { state, store in
+            props(state, store).first
+        }
+    }
+}
 
-        return sequence.reduce(.empty(), &&)
+extension Collection {
+    func flatten<State, Action, Props>() -> SideEffects<State, Action, [Props]>
+
+        where
+        Element == SideEffects<State, Action, [Props]> {
+
+        reduce(.empty, +)
     }
 
-    static func conditional(
-        condition: (State) -> Bool,
-        then lhs: SideEffects<State, Action, Props>,
-        else rhs: SideEffects<State, Action, Props>) -> SideEffects<State, Action, Props> {
+    func flatten<State, Action, Props>() -> SideEffects<State, Action, [Props]>
 
-        SideEffects<State, Action, Props> { state, store in
+        where
+        Element == SideEffects<State, Action, Props> {
+
+        reduce(.empty, +)
+    }
+}
+
+extension Collection {
+    func compactMap<State, Action, Props, T>(_ transform: @escaping (Props?) -> T?) -> SideEffects<State, Action, [T]>
+        where
+        Element == SideEffects<State, Action, Props?> {
+
+        flatten().map { props in props.compactMap { transform($0) } }
+    }
+
+    func flatMap<State, Action, Props, ResultProps>(
+        _ transform: @escaping (Props) -> ResultProps) -> SideEffects<State, Action, [ResultProps]>
+
+        where
+        Element == SideEffects<State, Action, [Props]> {
+
+        flatten().map { props in props.compactMap { transform($0) } }
+    }
+}
+
+extension SideEffects {
+    func map<T>(_ transform: @escaping (Props) -> T) -> SideEffects<State, Action, T> {
+        SideEffects<State, Action, T> { state, store in
+            transform(props(state, store))
+        }
+    }
+}
+
+extension SideEffects {
+    static var empty: SideEffects<State, Action, Props?> {
+        SideEffects<State, Action, Props?> { _, _ in
+            nil
+        }
+    }
+
+    static func + (lhs: SideEffects<State, Action, [Props]>, rhs: SideEffects<State, Action, Props>) -> SideEffects<State, Action, [Props]> {
+
+        lhs + rhs.map { [$0] }
+    }
+
+    static func `if`(
+        _ condition: @escaping (State) -> Bool,
+        then sideEffects: SideEffects<State, Action, Props>,
+        else optionalSideEffects: SideEffects<State, Action, Props>? = nil) -> SideEffects<State, Action, Props?> {
+
+        SideEffects<State, Action, Props?> { state, store in
             condition(state) ?
-                lhs(state, store)
-                : rhs(state, store)
+                sideEffects.props(state, store)
+                : optionalSideEffects?.props(state, store)
         }
     }
 }
