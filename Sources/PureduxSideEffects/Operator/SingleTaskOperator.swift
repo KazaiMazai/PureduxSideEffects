@@ -76,7 +76,7 @@ private extension SingleTaskOperator {
         }
 
         override func createTaskFor(_ request: Request,
-                                          with taskResultHandler: @escaping TaskResultHandler) -> Task {
+                                    with taskResultHandler: @escaping TaskResultHandler) -> Task {
             createTask(request, taskResultHandler)
         }
 

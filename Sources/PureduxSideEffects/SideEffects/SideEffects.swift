@@ -56,8 +56,10 @@ extension Collection {
 }
 
 extension Collection {
-    func compactMap<State, Action, Props, T>(_ transform: @escaping (Props?) -> T?) -> SideEffects<State, Action, [T]>
-        where
+    func compactMap<State, Action, Props, T>(
+        _ transform: @escaping (Props?) -> T?) -> SideEffects<State, Action, [T]>
+
+    where
         Element == SideEffects<State, Action, Props?> {
 
         flatten().map { props in props.compactMap { transform($0) } }
@@ -88,7 +90,8 @@ extension SideEffects {
         }
     }
 
-    static func + (lhs: SideEffects<State, Action, [Props]>, rhs: SideEffects<State, Action, Props>) -> SideEffects<State, Action, [Props]> {
+    static func + (lhs: SideEffects<State, Action, [Props]>,
+                   rhs: SideEffects<State, Action, Props>) -> SideEffects<State, Action, [Props]> {
 
         lhs + rhs.map { [$0] }
     }
