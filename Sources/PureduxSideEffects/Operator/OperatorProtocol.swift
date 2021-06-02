@@ -7,7 +7,7 @@
 
 import Foundation
 
-public protocol OperatorProtocol {
+public protocol OperatorProtocol: class {
     associatedtype Props
     associatedtype Request: OperatorRequest
     associatedtype Task: OperatorTask

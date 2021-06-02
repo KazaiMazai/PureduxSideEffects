@@ -36,16 +36,17 @@ public struct Middleware<State, Action, Operator>
 
 extension Middleware {
     public var asObserver: Observer<State> {
-        Observer { state in
-            sideEffectsOperator.processingQueue.async { observe(state: state) }
-            return .active
-        }
-    }
-}
+        Observer { state, complete in
+             sideEffectsOperator.processingQueue.async { [weak sideEffectsOperator] in
+                guard let sideEffectsOperator = sideEffectsOperator else {
+                    complete(.dead)
+                    return
+                }
 
-extension Middleware {
-    private func observe(state: State) {
-        let operatorProps = props(state, store)
-        sideEffectsOperator.process(operatorProps)
+                let operatorProps = props(state, store)
+                sideEffectsOperator.process(operatorProps)
+                complete(.active)
+            }
+        }
     }
 }
