@@ -16,7 +16,7 @@ public struct SideEffects<State, Action, Props> {
     }
 }
 
-extension SideEffects where Props: Collection {
+public extension SideEffects where Props: Collection {
     static func + (lhs: SideEffects<State, Action, Props>, rhs: SideEffects<State, Action, Props>) -> SideEffects<State, Action, [Props.Element]> {
 
         SideEffects<State, Action, [Props.Element]> { state, store in
@@ -37,7 +37,7 @@ extension SideEffects where Props: Collection {
     }
 }
 
-extension Collection {
+public extension Collection {
     func flatten<State, Action, Props>() -> SideEffects<State, Action, [Props]>
 
         where
@@ -55,7 +55,7 @@ extension Collection {
     }
 }
 
-extension Collection {
+public extension Collection {
     func compactMap<State, Action, Props, T>(
         _ transform: @escaping (Props?) -> T?) -> SideEffects<State, Action, [T]>
 
@@ -75,7 +75,7 @@ extension Collection {
     }
 }
 
-extension SideEffects {
+public extension SideEffects {
     func map<T>(_ transform: @escaping (Props) -> T) -> SideEffects<State, Action, T> {
         SideEffects<State, Action, T> { state, store in
             transform(props(state, store))
@@ -83,7 +83,7 @@ extension SideEffects {
     }
 }
 
-extension SideEffects {
+public extension SideEffects {
     static var empty: SideEffects<State, Action, Props?> {
         SideEffects<State, Action, Props?> { _, _ in
             nil
