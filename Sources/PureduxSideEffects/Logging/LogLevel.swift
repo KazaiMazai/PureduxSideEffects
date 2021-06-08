@@ -7,13 +7,16 @@
 
 import Foundation
 
-public enum Loglevel: Int, Comparable {
+public enum LogLevel: Int, Comparable {
     case trace
     case debug
     case info
+    case notice
     case warning
     case error
+    case critical
     case silent
+
 
     var label: String {
         switch self {
@@ -22,17 +25,29 @@ public enum Loglevel: Int, Comparable {
         case .debug:
             return "🐞"
         case .info:
-            return "✏️"
-        case .warning:
+            return "ℹ️"
+        case .notice:
             return "✋🏼"
+        case .warning:
+            return "⚠️"
         case .error:
             return "😡"
+        case .critical:
+            return "🔥"
         case .silent:
             return "🤐"
         }
     }
+}
 
-    public static func < (lhs: Loglevel, rhs: Loglevel) -> Bool {
-        return lhs.rawValue < rhs.rawValue
+extension LogLevel {
+    public static func < (lhs: LogLevel, rhs: LogLevel) -> Bool {
+        return lhs.level < rhs.level
+    }
+}
+
+extension LogLevel {
+    private var level: Int {
+        rawValue
     }
 }

@@ -7,8 +7,9 @@
 
 import Foundation
 
-public enum OperatorResult<T> {
+public enum TaskResult<T, Status> {
     case success(T)
     case cancelled
-    case error(Error)
+    case statusChanged(Status)
+    case failure(Error)
 }

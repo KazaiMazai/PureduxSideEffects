@@ -7,39 +7,33 @@
 
 import Foundation
 
-public protocol OperatorProtocol {
-    associatedtype Request: OperatorRequest
-    associatedtype Task: OperatorTask
+open class Operator<Request, Task>: OperatorProtocol
+    where
+    Task: OperatorTask,
+    Request: OperatorRequest {
 
-    var queue: DispatchQueue { get }
-    func process(requests: [Request])
+    public typealias TaskResultHandler = (TaskResult<Request.SuccessResult, Request.TaskStatus>) -> Void
+    
+    private var activeRequests: [Request.ID: (Request, Task)] = [:]
+    private var completedRequests: Set<Request.ID> = []
 
-    func createTaskFor(_ request: Request, with completeHandler: @escaping (OperatorResult<Request.Result>) -> Void) -> Task
+    public let processingQueue: DispatchQueue
+    public let logger: Logger
 
-    func run(task: Task, for request: Request)
-}
-
-open class Operator<Request, Task>: OperatorProtocol where Task: OperatorTask, Request: OperatorRequest {
-    private var activeRequests: [Request.RequestID: (Request, Task)] = [:]
-    private var completedRequests: Set<Request.RequestID> = []
-
-    public let queue: DispatchQueue
-    public let logging: LogSource
-
-    public init(queueLabel: String,
+    public init(label: String,
                 qos: DispatchQoS,
-                logging: LogSource = .defaultLogging()) {
-        self.queue = DispatchQueue(label: queueLabel)
-        self.logging = logging
+                logger: Logger = .console(.info)) {
+        self.processingQueue = DispatchQueue(label: label)
+        self.logger = .with(label: label, logger: logger)
     }
 
-    public func process(requests: [Request]) {
-        queue.async { [weak self] in
-            self?.updateActiveRequests(requests: requests)
+    public func process(_ input: [Request]) {
+        processingQueue.async { [weak self] in
+            self?.performTasksFor(input)
         }
     }
 
-    open func createTaskFor(_ request: Request, with completeHandler: @escaping (OperatorResult<Request.Result>) -> Void) -> Task {
+    open func createTaskFor(_ request: Request, with taskResultHandler: @escaping TaskResultHandler) -> Task {
         fatalError("Not implemented. Should be overriden")
     }
 
@@ -49,21 +43,21 @@ open class Operator<Request, Task>: OperatorProtocol where Task: OperatorTask, R
 }
 
 extension Operator {
-    private func updateActiveRequests(requests: [Request]) {
-        var remainedActiveRequestsIds = Set(activeRequests.keys)
+    private func performTasksFor(_ requests: [Request]) {
+        var requestsToCancel = Set(activeRequests.keys)
 
-        for request in requests {
-            process(request: request)
-            remainedActiveRequestsIds.remove(request.id)
+        requests.forEach {
+            runTaskIfNeededFor(request: $0)
+            requestsToCancel.remove($0.id)
         }
 
-        for cancelledRequestId in remainedActiveRequestsIds {
-            cancel(requestId: cancelledRequestId)
+        requestsToCancel.forEach {
+            cancel(requestId: $0)
         }
     }
 
-    private func process(request: Request) {
-        if completedRequests.contains(request.id) {
+    private func runTaskIfNeededFor(request: Request) {
+        guard !completedRequests.contains(request.id) else {
             return
         }
 
@@ -71,11 +65,11 @@ extension Operator {
             return
         }
 
-        logging.log(.trace, "ID: \(request.id)")
+        logger.log(.debug, "[Run] ID: \(request.id)")
 
         let task = createTaskFor(request) { [weak self] result in
-            self?.queue.async {
-                self?.complete(request: request, result: result)
+            self?.processingQueue.async {
+                self?.handleTaskStatusUpdate(request: request, with: result)
             }
         }
 
@@ -83,19 +77,28 @@ extension Operator {
         run(task: task, for: request)
     }
 
-    private func cancel(requestId: Request.RequestID) {
+    private func cancel(requestId: Request.ID) {
         guard let (request, task) = activeRequests[requestId] else {
-           return
+            return
         }
 
-        task.cancel() // Stop task execution
+        logger.log(.debug, "[Cancel] ID: \(requestId)")
+        task.cancel()
         activeRequests[requestId] = nil
         request.handle(.cancelled)
     }
 
-    private func complete(request: Request, result: OperatorResult<Request.Result>) {
-        activeRequests[request.id] = nil
-        completedRequests.insert(request.id)
+    private func handleTaskStatusUpdate(request: Request, with result: TaskResult<Request.SuccessResult, Request.TaskStatus>) {
+        switch result {
+        case .success, .cancelled, .failure:
+            logger.log(.debug, "[Complete] ID: \(request.id)")
+            activeRequests[request.id] = nil
+            completedRequests.insert(request.id)
+        case .statusChanged(let status):
+            logger.log(.debug, "[Status Changed] ID: \(request.id) [\(status)]")
+            break
+        }
+
         request.handle(result)
     }
 }
